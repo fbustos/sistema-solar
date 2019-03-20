@@ -4,8 +4,11 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using SistemaSolar.Extensions;
 using System;
 using System.IO;
+using Contracts;
+using LoggerService;
 
 namespace SistemaSolar
 {
@@ -37,6 +40,8 @@ namespace SistemaSolar
                 })
                 .ConfigureServices(services =>
                 {
+                    services.ConfigureMySqlContext(Configuration);
+                    services.ConfigureRepositoryWrapper();
                     // Add framework services.Microsoft.VisualStudio.ExtensionManager.ExtensionManagerService
                     services.AddMvc();
 
