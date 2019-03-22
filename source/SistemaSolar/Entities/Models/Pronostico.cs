@@ -18,5 +18,8 @@ namespace Entities.Models
 
         [Required]
         public string Clima { get; set; }
+
+        [NotMapped]
+        public double NivelDeLluvia { get; set; }
     }
 }

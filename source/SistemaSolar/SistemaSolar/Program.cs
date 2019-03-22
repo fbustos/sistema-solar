@@ -7,8 +7,12 @@ using Microsoft.Extensions.Logging;
 using SistemaSolar.Extensions;
 using System;
 using System.IO;
+//using Hangfire.MySql.Core;
+using Hangfire;
+using Hangfire.MySql.Core;
 using Contracts;
-using LoggerService;
+using System.Threading.Tasks;
+using Entities;
 
 namespace SistemaSolar
 {
@@ -22,87 +26,112 @@ namespace SistemaSolar
 
         public static void Main(string[] args)
         {
-            var host = new WebHostBuilder()
-                .UseKestrel()
-                .UseContentRoot(Directory.GetCurrentDirectory())
-                .UseIISIntegration()
-                .ConfigureAppConfiguration((context, configBuilder) =>
-                {
-                    HostingEnvironment = context.HostingEnvironment;
+            IWebHost host = CreateWebHostBuilder().Build();
 
-                    configBuilder.SetBasePath(HostingEnvironment.ContentRootPath)
-                        .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
-                        .AddJsonFile($"appsettings.{HostingEnvironment.EnvironmentName}.json", optional: true)
-                        .AddEnvironmentVariables();
+            // Create a new scope
+            using (var scope = host.Services.CreateScope())
+            {
+                // Get the DbContext instance
+                var service = scope.ServiceProvider.GetService<IPronosticoService>();
 
-                    Configuration = configBuilder.Build();
-                    GcpProjectId = GetProjectId(Configuration);
-                })
-                .ConfigureServices(services =>
-                {
-                    services.ConfigureMySqlContext(Configuration);
-                    services.ConfigureRepositoryWrapper();
-                    // Add framework services.Microsoft.VisualStudio.ExtensionManager.ExtensionManagerService
-                    services.AddMvc();
+                //Do the migration asynchronously
+                service.RunJob();
+            }
 
-                    if (HasGcpProjectId)
-                    {
-                        // Enables Stackdriver Trace.
-                        services.AddGoogleTrace(options => options.ProjectId = GcpProjectId);
-                        // Sends Exceptions to Stackdriver Error Reporting.
-                        services.AddGoogleExceptionLogging(
-                            options =>
-                            {
-                                options.ProjectId = GcpProjectId;
-                                options.ServiceName = GetServiceName(Configuration);
-                                options.Version = GetVersion(Configuration);
-                            });
-                        services.AddSingleton<ILoggerProvider>(sp => GoogleLoggerProvider.Create(GcpProjectId));
-                    }
-                })
-                .ConfigureLogging(loggingBuilder =>
-                {
-                    loggingBuilder.AddConfiguration(Configuration.GetSection("Logging"));
-                    if (HostingEnvironment.IsDevelopment())
-                    {
-                        // Only use Console and Debug logging during development.
-                        loggingBuilder.AddConsole(options =>
-                            options.IncludeScopes = Configuration.GetValue<bool>("Logging:IncludeScopes"));
-                        loggingBuilder.AddDebug();
-                    }
-                })
-                .Configure((app) =>
-                {
-                    var logger = app.ApplicationServices.GetService<ILoggerFactory>().CreateLogger("Startup");
-
-                    if (HasGcpProjectId)
-                    {
-
-                        logger.LogInformation("Stackdriver Logging enabled: https://console.cloud.google.com/logs/");
-
-                        // Sends logs to Stackdriver Error Reporting.
-                        app.UseGoogleExceptionLogging();
-                        logger.LogInformation(
-                            "Stackdriver Error Reporting enabled: https://console.cloud.google.com/errors/");
-                        // Sends logs to Stackdriver Trace.
-                        app.UseGoogleTrace();
-                        logger.LogInformation("Stackdriver Trace enabled: https://console.cloud.google.com/traces/");
-                    }
-                    else
-                    {
-                        logger.LogWarning(
-                            "Stackdriver Logging not enabled. Missing Google:ProjectId in configuration.");
-                        logger.LogWarning(
-                            "Stackdriver Error Reporting not enabled. Missing Google:ProjectId in configuration.");
-                        logger.LogWarning(
-                            "Stackdriver Trace not enabled. Missing Google:ProjectId in configuration.");
-                    }
-
-                    app.UseMvc();
-                })
-                .Build();
-
+            // Run the WebHost, and start accepting requests
+            // There's an async overload, so we may as well use it
             host.Run();
+        }
+
+        private static IWebHostBuilder CreateWebHostBuilder()
+        {
+            return new WebHostBuilder()
+                            .UseKestrel()
+                            .UseContentRoot(Directory.GetCurrentDirectory())
+                            .UseIISIntegration()
+                            .ConfigureAppConfiguration((context, configBuilder) =>
+                            {
+                                HostingEnvironment = context.HostingEnvironment;
+
+                                configBuilder.SetBasePath(HostingEnvironment.ContentRootPath)
+                                    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                                    .AddJsonFile($"appsettings.{HostingEnvironment.EnvironmentName}.json", optional: true)
+                                    .AddEnvironmentVariables();
+
+                                Configuration = configBuilder.Build();
+                                GcpProjectId = GetProjectId(Configuration);
+                            })
+                            .ConfigureServices(services =>
+                            {
+                                services.ConfigureMySqlContext(Configuration);
+                                //services.AddHangfire(config => config.UseStorage(new MySqlStorage(Configuration.GetConnectionString("SistemaSolar"))));
+                                services.ConfigureRepositoryWrapper();
+                                services.ConfigureServices();
+
+                                // Add framework services.Microsoft.VisualStudio.ExtensionManager.ExtensionManagerService
+                                services.AddMvc();
+
+                                // Add functionality to inject IOptions<T>
+                                services.AddOptions();
+
+                                // Add our Config object so it can be injected
+                                services.Configure<MyConfig>(Configuration.GetSection("Data"));
+
+                                if (HasGcpProjectId)
+                                {
+                                    // Enables Stackdriver Trace.
+                                    services.AddGoogleTrace(options => options.ProjectId = GcpProjectId);
+                                    // Sends Exceptions to Stackdriver Error Reporting.
+                                    services.AddGoogleExceptionLogging(
+                                                    options =>
+                                                    {
+                                                        options.ProjectId = GcpProjectId;
+                                                        options.ServiceName = GetServiceName(Configuration);
+                                                        options.Version = GetVersion(Configuration);
+                                                    });
+                                    services.AddSingleton<ILoggerProvider>(sp => GoogleLoggerProvider.Create(GcpProjectId));
+                                }
+                            })
+                            .ConfigureLogging(loggingBuilder =>
+                            {
+                                loggingBuilder.AddConfiguration(Configuration.GetSection("Logging"));
+                                if (HostingEnvironment.IsDevelopment())
+                                {
+                                    // Only use Console and Debug logging during development.
+                                    loggingBuilder.AddConsole(options =>
+                                                    options.IncludeScopes = Configuration.GetValue<bool>("Logging:IncludeScopes"));
+                                    loggingBuilder.AddDebug();
+                                }
+                            })
+                            .Configure((app) =>
+                            {
+                                var logger = app.ApplicationServices.GetService<ILoggerFactory>().CreateLogger("Startup");
+
+                                if (HasGcpProjectId)
+                                {
+
+                                    logger.LogInformation("Stackdriver Logging enabled: https://console.cloud.google.com/logs/");
+
+                                    // Sends logs to Stackdriver Error Reporting.
+                                    app.UseGoogleExceptionLogging();
+                                    logger.LogInformation(
+                                        "Stackdriver Error Reporting enabled: https://console.cloud.google.com/errors/");
+                                    // Sends logs to Stackdriver Trace.
+                                    app.UseGoogleTrace();
+                                    logger.LogInformation("Stackdriver Trace enabled: https://console.cloud.google.com/traces/");
+                                }
+                                else
+                                {
+                                    logger.LogWarning(
+                                        "Stackdriver Logging not enabled. Missing Google:ProjectId in configuration.");
+                                    logger.LogWarning(
+                                        "Stackdriver Error Reporting not enabled. Missing Google:ProjectId in configuration.");
+                                    logger.LogWarning(
+                                        "Stackdriver Trace not enabled. Missing Google:ProjectId in configuration.");
+                                }
+
+                                app.UseMvc();
+                            });
         }
 
         /// <summary>

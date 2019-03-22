@@ -7,6 +7,7 @@ namespace Repository
     {
         private RepositoryContext _repoContext;
         private IPronosticoRepository _pronostico;
+        private IPlanetaRepository _planeta;
 
         public IPronosticoRepository Pronostico
         {
@@ -18,6 +19,19 @@ namespace Repository
                 }
 
                 return _pronostico;
+            }
+        }
+
+        public IPlanetaRepository Planeta
+        {
+            get
+            {
+                if (_planeta == null)
+                {
+                    _planeta = new PlanetaRepository(_repoContext);
+                }
+
+                return _planeta;
             }
         }
 

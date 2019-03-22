@@ -31,6 +31,11 @@ namespace Repository
             this.RepositoryContext.Set<T>().Add(entity);
         }
 
+        public void CreateMultiple(IEnumerable<T> list)
+        {
+            this.RepositoryContext.Set<T>().AddRange(list);
+        }
+
         public void Update(T entity)
         {
             this.RepositoryContext.Set<T>().Update(entity);
