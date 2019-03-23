@@ -1,13 +1,10 @@
 ﻿using Contracts;
 using Entities;
 using Entities.Models;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -40,7 +37,7 @@ namespace Services
             {
                 var clima = PronosticarClimaPorDia(i, _config.Value.Planetas);
 
-                var p = clima == "Lluvia" ? this.CalcularPerimetro(_config.Value.Planetas) : 0.0;
+                var p = clima == ClimaConstants.Lluvia ? this.CalcularPerimetro(_config.Value.Planetas) : 0.0;
                 perimetroMax = Math.Max(perimetroMax, p);
 
                 pronosticos.Add(new Pronostico
@@ -53,9 +50,9 @@ namespace Services
                 });
             }
 
-            foreach (var pronostico in pronosticos.Where(p => p.Clima == "Lluvia" && p.NivelDeLluvia == perimetroMax))
+            foreach (var pronostico in pronosticos.Where(p => p.Clima == ClimaConstants.Lluvia && p.NivelDeLluvia == perimetroMax))
             {
-                pronostico.Clima = "Lluvia intensa";
+                pronostico.Clima = ClimaConstants.LluviaIntensa;
             }
 
             _repository.Pronostico.CreateMultiple(pronosticos);
@@ -93,17 +90,17 @@ namespace Services
             if (this.EstanAlineados(planetas, out double? pendiente))
             {
                 if (this.AlineadosAlSol(pendiente, planetas.First(), sol))
-                    return "Sequía";
+                    return ClimaConstants.Sequia;
                 else
-                    return "Condiciones óptimas de presión y temperatura";
+                    return ClimaConstants.Optimo;
             }
 
             if (this.PlanetasContienenAlSol(planetas, sol))
             {
-                return "Lluvia";
+                return ClimaConstants.Lluvia;
             }
 
-            return "Indeterminado";
+            return ClimaConstants.Indeterminado;
         }
 
         private double CalcularPerimetro(IEnumerable<Planeta> planetas)

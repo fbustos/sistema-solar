@@ -27,18 +27,6 @@ namespace SistemaSolar.Controllers
         {
             try
             {
-                for (int i = 0; i < 100; i++)
-                {
-                    _repository.Pronostico.Create(new Pronostico
-                    {
-                        PronosticoId = Guid.NewGuid(),
-                        Clima = "Sequia",
-                        Dia = i,
-                        Fecha = DateTime.Today.AddDays(i)
-                    });
-                }
-                _repository.Pronostico.Save();
-
                 // Sends a message to configured loggers, including the Stackdriver logger.
                 // The Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker logger will log all controller actions with
                 // log level information. This log is for additional information.
@@ -57,10 +45,11 @@ namespace SistemaSolar.Controllers
         }
 
         // GET api/values/5
-        [HttpGet("{id}")]
-        public string Get(int id)
+        [HttpGet("clima")]
+        public IActionResult Get([FromQuery(Name = "dia")]int dia)
         {
-            return "value";
+            var p = _repository.Pronostico.FindByCondition(x => x.Dia == dia);
+            return Ok(p);
         }
 
         // POST api/values

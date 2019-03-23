@@ -7,9 +7,6 @@ using Microsoft.Extensions.Logging;
 using SistemaSolar.Extensions;
 using System;
 using System.IO;
-//using Hangfire.MySql.Core;
-using Hangfire;
-using Hangfire.MySql.Core;
 using Contracts;
 using System.Threading.Tasks;
 using Entities;
@@ -64,7 +61,6 @@ namespace SistemaSolar
                             .ConfigureServices(services =>
                             {
                                 services.ConfigureMySqlContext(Configuration);
-                                //services.AddHangfire(config => config.UseStorage(new MySqlStorage(Configuration.GetConnectionString("SistemaSolar"))));
                                 services.ConfigureRepositoryWrapper();
                                 services.ConfigureServices();
 
