@@ -8,6 +8,7 @@ namespace Repository
         private RepositoryContext _repoContext;
         private IPronosticoRepository _pronostico;
         private IPlanetaRepository _planeta;
+        private IJobRepository _job;
 
         public IPronosticoRepository Pronostico
         {
@@ -32,6 +33,19 @@ namespace Repository
                 }
 
                 return _planeta;
+            }
+        }
+
+        public IJobRepository Job
+        {
+            get
+            {
+                if (_job == null)
+                {
+                    _job = new JobRepository(_repoContext);
+                }
+
+                return _job;
             }
         }
 

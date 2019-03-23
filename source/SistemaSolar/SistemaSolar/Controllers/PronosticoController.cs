@@ -1,9 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Contracts;
-using Entities.Models;
+using Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -13,43 +10,114 @@ namespace SistemaSolar.Controllers
     public class PronosticoController : Controller
     {
         private readonly ILogger _logger;
-        private readonly IRepositoryWrapper _repository;
+        private readonly IPronosticoService _pronosticoService;
 
-        public PronosticoController(ILogger<PronosticoController> logger, IRepositoryWrapper repository)
+        public PronosticoController(ILogger<PronosticoController> logger, IPronosticoService pronosticoService)
         {
             _logger = logger;
-            _repository = repository;
+            _pronosticoService = pronosticoService;
         }
 
-        // GET api/values
+        // GET api/pronostico
         [HttpGet]
         public IActionResult Get()
         {
             try
             {
-                // Sends a message to configured loggers, including the Stackdriver logger.
-                // The Microsoft.AspNetCore.Mvc.Internal.ControllerActionInvoker logger will log all controller actions with
-                // log level information. This log is for additional information.
-
-                var pronosticos = _repository.Pronostico.FindAll();
-
+                var pronosticos = _pronosticoService.GetAll();
                 _logger.LogInformation($"Returned all pronosticos from database.");
 
                 return Ok(pronosticos);
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Something went wrong inside FindAll action: {ex.Message}");
+                _logger.LogError($"Something went wrong inside GetAll action: {ex.Message}");
                 return StatusCode(500, "Internal server error");
             }
         }
 
-        // GET api/values/5
+        // GET api/pronostico/clima?dia=15
         [HttpGet("clima")]
         public IActionResult Get([FromQuery(Name = "dia")]int dia)
         {
-            var p = _repository.Pronostico.FindByCondition(x => x.Dia == dia);
-            return Ok(p);
+            try
+            {
+                var p = _pronosticoService.GetByDia(dia);
+                if (p == null)
+                {
+                    return NotFound(p);
+                }
+
+                return Ok(p);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Something went wrong inside Get action: {ex.Message}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpGet("sequia")]
+        public IActionResult GetDiasDeSequia()
+        {
+            try
+            {
+                var climas = new string[] { ClimaConstants.Sequia };
+                var p = _pronosticoService.GetByClimas(climas);
+                if (p == null)
+                {
+                    return NotFound(p);
+                }
+
+                return Ok(p);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Something went wrong inside GetDiasDeSequia action: {ex.Message}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpGet("lluvia")]
+        public IActionResult GetDiasDeLluvia()
+        {
+            try
+            {
+                var climas = new string[] { ClimaConstants.Lluvia, ClimaConstants.LluviaIntensa };
+                var p = _pronosticoService.GetByClimas(climas);
+                if (p == null)
+                {
+                    return NotFound(p);
+                }
+
+                return Ok(p);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Something went wrong inside GetDiasDeLluvia action: {ex.Message}");
+                return StatusCode(500, "Internal server error");
+            }
+        }
+
+        [HttpGet("optimo")]
+        public IActionResult GetDiasOptimos([FromQuery(Name = "dia")]int dia)
+        {
+            try
+            {
+                var climas = new string[] { ClimaConstants.Optimo };
+                var p = _pronosticoService.GetByClimas(climas);
+                if (p == null)
+                {
+                    return NotFound(p);
+                }
+
+                return Ok(p);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Something went wrong inside GetDiasOptimos action: {ex.Message}");
+                return StatusCode(500, "Internal server error");
+            }
         }
 
         // POST api/values

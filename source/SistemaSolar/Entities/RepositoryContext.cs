@@ -14,5 +14,7 @@ namespace Entities
         public DbSet<Pronostico> Pronosticos { get; set; }
 
         public DbSet<Planeta> Planetas { get; set; }
+
+        public DbSet<Job> Jobs { get; set; }
     }
 }

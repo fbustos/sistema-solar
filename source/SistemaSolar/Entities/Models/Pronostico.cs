@@ -8,9 +8,6 @@ namespace Entities.Models
     public class Pronostico
     {
         [Key]
-        public Guid PronosticoId { get; set; }
-
-        [Required]
         public int Dia { get; set; }
 
         [Required]
@@ -18,6 +15,8 @@ namespace Entities.Models
 
         [Required]
         public string Clima { get; set; }
+        
+        public int? JobId { get; set; }
 
         [NotMapped]
         public double NivelDeLluvia { get; set; }

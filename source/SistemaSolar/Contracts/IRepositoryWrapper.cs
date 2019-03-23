@@ -5,5 +5,7 @@
         IPronosticoRepository Pronostico { get; }
 
         IPlanetaRepository Planeta { get; }
+
+        IJobRepository Job { get; }
     }
 }

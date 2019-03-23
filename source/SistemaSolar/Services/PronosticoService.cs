@@ -2,51 +2,64 @@
 using Entities;
 using Entities.Models;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace Services
 {
     public class PronosticoService : IPronosticoService
     {
-        private readonly IOptions<MyConfig> _config;
         private readonly ILogger<PronosticoService> _logger;
         private readonly IRepositoryWrapper _repository;
 
-        public PronosticoService(ILogger<PronosticoService> logger, IRepositoryWrapper repository, IOptions<MyConfig> config)
+        public PronosticoService(ILogger<PronosticoService> logger, IRepositoryWrapper repository)
         {
             _logger = logger;
             _repository = repository;
-            _config = config;
         }
 
-        public void RunJob()
+        public IEnumerable<Pronostico> GetAll()
         {
-            InitializePlanets();
+            return _repository.Pronostico.FindAll();
+        }
+
+        public Pronostico GetByDia(int dia)
+        {
+            return _repository.Pronostico.FindByCondition(x => x.Dia == dia).SingleOrDefault();
+        }
+
+        public IEnumerable<Pronostico> GetByClimas(string[] climas)
+        {
+            return _repository.Pronostico.FindByCondition(x => climas.Contains(x.Clima));
+        }
+
+        public void DeleteAll()
+        {
             _repository.Pronostico.FindAll()?.ToList().ForEach(p => _repository.Pronostico.Delete(p));
             _repository.Pronostico.Save();
+        }
 
+        public void PronosticarClima(IEnumerable<Planeta> planetas, int anios, DateTime fecha, int? jobId = null)
+        {
             var pronosticos = new List<Pronostico>();
-            var tenYears = (DateTime.Today.AddYears(10) - DateTime.Today).TotalDays;
+            var totalDays = this.GetTotalDays(anios, fecha);
             var perimetroMax = double.MinValue;
 
-            for (var i = 1; i <= tenYears; i++)
+            for (var i = 1; i <= totalDays; i++)
             {
-                var clima = PronosticarClimaPorDia(i, _config.Value.Planetas);
+                var clima = PronosticarClimaPorDia(i, planetas);
 
-                var p = clima == ClimaConstants.Lluvia ? this.CalcularPerimetro(_config.Value.Planetas) : 0.0;
+                var p = clima == ClimaConstants.Lluvia ? this.CalcularPerimetro(planetas) : 0.0;
                 perimetroMax = Math.Max(perimetroMax, p);
 
                 pronosticos.Add(new Pronostico
                 {
-                    PronosticoId = new Guid(),
                     Dia = i,
                     Fecha = DateTime.Today.AddDays(i),
                     Clima = clima,
-                    NivelDeLluvia = p
+                    NivelDeLluvia = p,
+                    JobId = jobId
                 });
             }
 
@@ -59,27 +72,9 @@ namespace Services
             _repository.Pronostico.Save();
         }
 
-        private void InitializePlanets()
+        private double GetTotalDays(int anios, DateTime fechaInicio)
         {
-            var data = _config.Value;
-
-            DeleteAllExistingPlanets();
-            _logger.LogDebug("Planetas eliminados");
-
-            InsertPlanets(data.Planetas);
-            _logger.LogDebug("Planetas agregados");
-        }
-
-        private void InsertPlanets(IEnumerable<Planeta> planetas)
-        {
-            _repository.Planeta.CreateMultiple(planetas);
-            _repository.Planeta.Save();
-        }
-
-        private void DeleteAllExistingPlanets()
-        {
-            var dbPlanets = _repository.Planeta.FindAll();
-            dbPlanets?.ToList().ForEach(p => _repository.Planeta.Delete(p));
+            return (fechaInicio.AddYears(anios) - fechaInicio).TotalDays;
         }
 
         private string PronosticarClimaPorDia(int dia, IEnumerable<Planeta> planetas)
@@ -186,12 +181,6 @@ namespace Services
         private double? CalcularPendiente(Tuple<double, double> p1, Tuple<double, double> p2)
         {
             return (p1.Item1 - p2.Item1) == 0 ? (double?)null : (p1.Item2 - p2.Item2) / (p1.Item1 - p2.Item1);
-        }
-
-        public Task RunJobAsync()
-        {
-
-            throw new NotImplementedException();
         }
     }
 }

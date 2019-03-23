@@ -10,6 +10,7 @@ using System.IO;
 using Contracts;
 using System.Threading.Tasks;
 using Entities;
+using Microsoft.Extensions.Options;
 
 namespace SistemaSolar
 {
@@ -28,11 +29,17 @@ namespace SistemaSolar
             // Create a new scope
             using (var scope = host.Services.CreateScope())
             {
-                // Get the DbContext instance
-                var service = scope.ServiceProvider.GetService<IPronosticoService>();
+                // Get job configuration
+                var job = scope.ServiceProvider.GetService<IOptions<MyConfig>>().Value;
 
-                //Do the migration asynchronously
-                service.RunJob();
+                if (job.JobConfig.Activo)
+                {
+                    // Get pronostico service from container
+                    var service = scope.ServiceProvider.GetService<IJobService>();
+
+                    // Run Job
+                    service.Run(job.Planetas, job.JobConfig.Anios, job.JobConfig.FechaInicio);
+                }
             }
 
             // Run the WebHost, and start accepting requests
@@ -71,7 +78,7 @@ namespace SistemaSolar
                                 services.AddOptions();
 
                                 // Add our Config object so it can be injected
-                                services.Configure<MyConfig>(Configuration.GetSection("Data"));
+                                services.Configure<MyConfig>(Configuration.GetSection("MyConfig"));
 
                                 if (HasGcpProjectId)
                                 {

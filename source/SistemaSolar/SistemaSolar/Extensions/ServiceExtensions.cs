@@ -24,6 +24,8 @@ namespace SistemaSolar.Extensions
         public static void ConfigureServices(this IServiceCollection services)
         {
             services.AddScoped<IPronosticoService, PronosticoService>();
+            services.AddScoped<IPlanetaService, PlanetaService>();
+            services.AddScoped<IJobService, JobService>();
         }
     }
 }
