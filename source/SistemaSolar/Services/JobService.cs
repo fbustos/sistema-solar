@@ -23,10 +23,17 @@ namespace Services
 
         public void Run(IEnumerable<Planeta> planetas, int anios = 10, string fechaInicio = null)
         {
-            Initialize(planetas);
-            var fecha = string.IsNullOrEmpty(fechaInicio) ? DateTime.Today : Convert.ToDateTime(fechaInicio);
-            var job = this.CreateJob(anios, fecha);
-            _pronosticoService.PronosticarClima(planetas, anios, fecha, job.JobId);
+            try
+            {
+                Initialize(planetas);
+                var fecha = string.IsNullOrEmpty(fechaInicio) ? DateTime.Today : Convert.ToDateTime(fechaInicio);
+                var job = this.CreateJob(anios, fecha);
+                _pronosticoService.PronosticarClima(planetas, anios, fecha, job.JobId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Ha ocurrido un error mientras se ejecutaba el job: ", ex.Message);
+            }
         }
 
         private void Initialize(IEnumerable<Planeta> planetas)

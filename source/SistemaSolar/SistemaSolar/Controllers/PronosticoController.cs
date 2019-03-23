@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
 using Contracts;
 using Entities;
+using Entities.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 
 namespace SistemaSolar.Controllers
@@ -11,11 +14,13 @@ namespace SistemaSolar.Controllers
     {
         private readonly ILogger _logger;
         private readonly IPronosticoService _pronosticoService;
+        private readonly IMemoryCache _memoryCache;
 
-        public PronosticoController(ILogger<PronosticoController> logger, IPronosticoService pronosticoService)
+        public PronosticoController(ILogger<PronosticoController> logger, IPronosticoService pronosticoService, IMemoryCache memoryCache)
         {
             _logger = logger;
             _pronosticoService = pronosticoService;
+            _memoryCache = memoryCache;
         }
 
         // GET api/pronostico
@@ -42,13 +47,21 @@ namespace SistemaSolar.Controllers
         {
             try
             {
-                var p = _pronosticoService.GetByDia(dia);
-                if (p == null)
+                Pronostico pronostico;
+                if (_memoryCache.TryGetValue(dia, out pronostico))
                 {
-                    return NotFound(p);
+                    _logger.LogInformation($"Clima obtenido de cache ", pronostico);
+                }
+                else
+                {
+                    pronostico = _pronosticoService.GetByDia(dia);
+                    if (pronostico != null)
+                    {
+                        _memoryCache.Set(dia, pronostico, DateTimeOffset.UtcNow.AddMinutes(30));
+                    }
                 }
 
-                return Ok(p);
+                return Ok(pronostico);
             }
             catch (Exception ex)
             {
@@ -63,13 +76,9 @@ namespace SistemaSolar.Controllers
             try
             {
                 var climas = new string[] { ClimaConstants.Sequia };
-                var p = _pronosticoService.GetByClimas(climas);
-                if (p == null)
-                {
-                    return NotFound(p);
-                }
+                var pronosticos = _pronosticoService.GetByClimas(climas);
 
-                return Ok(p);
+                return Ok(pronosticos);
             }
             catch (Exception ex)
             {
@@ -84,13 +93,9 @@ namespace SistemaSolar.Controllers
             try
             {
                 var climas = new string[] { ClimaConstants.Lluvia, ClimaConstants.LluviaIntensa };
-                var p = _pronosticoService.GetByClimas(climas);
-                if (p == null)
-                {
-                    return NotFound(p);
-                }
+                var pronosticos = _pronosticoService.GetByClimas(climas);
 
-                return Ok(p);
+                return Ok(pronosticos);
             }
             catch (Exception ex)
             {
@@ -105,13 +110,9 @@ namespace SistemaSolar.Controllers
             try
             {
                 var climas = new string[] { ClimaConstants.Optimo };
-                var p = _pronosticoService.GetByClimas(climas);
-                if (p == null)
-                {
-                    return NotFound(p);
-                }
+                var pronosticos = _pronosticoService.GetByClimas(climas);
 
-                return Ok(p);
+                return Ok(pronosticos);
             }
             catch (Exception ex)
             {

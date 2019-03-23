@@ -73,6 +73,7 @@ namespace SistemaSolar
 
                                 // Add framework services.Microsoft.VisualStudio.ExtensionManager.ExtensionManagerService
                                 services.AddMvc();
+                                services.AddMemoryCache();
 
                                 // Add functionality to inject IOptions<T>
                                 services.AddOptions();
