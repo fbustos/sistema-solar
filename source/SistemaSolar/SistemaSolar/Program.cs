@@ -134,6 +134,7 @@ namespace SistemaSolar
                                         "Stackdriver Trace not enabled. Missing Google:ProjectId in configuration.");
                                 }
 
+                                app.UseStaticFiles();
                                 app.UseMvc();
                             });
         }
