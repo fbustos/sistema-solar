@@ -5,6 +5,6 @@ namespace Contracts
 {
     public interface IJobService
     {
-        void Run(IEnumerable<Planeta> planetas = null, int anios = 10, string fechaInicio = null);
+        Job Run(IEnumerable<Planeta> planetas = null, int anios = 10, string fechaInicio = null);
     }
 }
