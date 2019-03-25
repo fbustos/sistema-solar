@@ -3,6 +3,7 @@ using Entities.Models;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Services
 {
@@ -21,22 +22,34 @@ namespace Services
             _pronosticoService = pronosticoService;
         }
 
-        public void Run(IEnumerable<Planeta> planetas, int anios = 10, string fechaInicio = null)
+        public Job Run(IEnumerable<Planeta> planetas, int anios = 10, string fechaInicio = null)
         {
             try
             {
-                Initialize(planetas);
+                if (anios <= 0)
+                {
+                    return null;
+                }
+
+                // Se inicializan los planetas y se borran los pronosticos existentes
+                planetas = Initialize(planetas).ToList();
+                // Calculo de la fecha de inicio
                 var fecha = string.IsNullOrEmpty(fechaInicio) ? DateTime.Today : Convert.ToDateTime(fechaInicio);
+                // Se crea el job
                 var job = this.CreateJob(anios, fecha);
+                // Se corre el pronosticador
                 _pronosticoService.PronosticarClima(planetas, anios, fecha, job.JobId);
+
+                return job;
             }
             catch (Exception ex)
             {
                 _logger.LogError("Ha ocurrido un error mientras se ejecutaba el job: ", ex.Message);
+                return null;
             }
         }
 
-        private void Initialize(IEnumerable<Planeta> planetas)
+        private IEnumerable<Planeta> Initialize(IEnumerable<Planeta> planetas)
         {
             if (planetas == null)
             {
@@ -48,7 +61,10 @@ namespace Services
                 _planetaService.CreatePlanetas(planetas);
             }
 
+            planetas.ToList().ForEach(p => p.Posicion = 0);
             _pronosticoService.DeleteAll();
+
+            return planetas;
         }
 
         private Job CreateJob(int anios, DateTime fechaInicio)

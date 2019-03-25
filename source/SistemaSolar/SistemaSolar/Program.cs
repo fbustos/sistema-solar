@@ -8,12 +8,15 @@ using SistemaSolar.Extensions;
 using System;
 using System.IO;
 using Contracts;
-using System.Threading.Tasks;
+using Swashbuckle.AspNetCore.Swagger;
 using Entities;
 using Microsoft.Extensions.Options;
+using Microsoft.OpenApi.Models;
+using System.Reflection;
 
 namespace SistemaSolar
 {
+#pragma warning disable CS1591
     public class Program
     {
         public static IHostingEnvironment HostingEnvironment { get; private set; }
@@ -81,6 +84,16 @@ namespace SistemaSolar
                                 // Add our Config object so it can be injected
                                 services.Configure<MyConfig>(Configuration.GetSection("MyConfig"));
 
+                                // Register the Swagger generator, defining 1 or more Swagger documents
+                                services.AddSwaggerGen(c =>
+                                {
+                                    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Sistema Solar Web API", Version = "v1" });
+                                    // Set the comments path for the Swagger JSON and UI.
+                                    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                                    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                                    c.IncludeXmlComments(xmlPath);
+                                });
+
                                 if (HasGcpProjectId)
                                 {
                                     // Enables Stackdriver Trace.
@@ -133,6 +146,17 @@ namespace SistemaSolar
                                     logger.LogWarning(
                                         "Stackdriver Trace not enabled. Missing Google:ProjectId in configuration.");
                                 }
+
+                                // Enable middleware to serve generated Swagger as a JSON endpoint.
+                                app.UseSwagger();
+
+                                // Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.), 
+                                // specifying the Swagger JSON endpoint.
+                                app.UseSwaggerUI(c =>
+                                {
+                                    c.SwaggerEndpoint("./swagger/v1/swagger.json", "SistemaSolar Web API V1");
+                                    c.RoutePrefix = string.Empty;
+                                });
 
                                 app.UseStaticFiles();
                                 app.UseMvc();
@@ -206,4 +230,5 @@ namespace SistemaSolar
             return versionId;
         }
     }
+#pragma warning restore CS1591
 }
