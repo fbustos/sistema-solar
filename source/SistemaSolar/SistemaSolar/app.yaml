@@ -1,0 +1,13 @@
+runtime: aspnetcore
+env: flex
+manual_scaling:
+  instances: 1
+resources:
+  cpu: 1
+  memory_gb: 1
+  disk_size_gb: 10
+env_variables:
+  My__Greeting: Hello AppEngine!
+beta_settings:
+  cloud_sql_instances: sistema-solar-1992:southamerica-east1:sistema-solar=tcp:3306
+service: sistema-solar
