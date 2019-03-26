@@ -45,7 +45,7 @@ namespace Services
             catch (Exception ex)
             {
                 _logger.LogError("Ha ocurrido un error mientras se ejecutaba el job: ", ex.Message);
-                return null;
+                throw;
             }
         }
 
