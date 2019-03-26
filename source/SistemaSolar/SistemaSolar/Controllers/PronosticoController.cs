@@ -172,7 +172,7 @@ namespace SistemaSolar.Controllers
         [ProducesResponseType(200)]
         [ProducesResponseType(404)]
         [ProducesResponseType(500)]
-        public IActionResult GetDiasOptimos([FromQuery(Name = "dia")]int dia)
+        public IActionResult GetDiasOptimos()
         {
             try
             {
