@@ -46,7 +46,7 @@ namespace SistemaSolar.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Something went wrong inside GetAll action: {ex.Message}");
+                _logger.LogError($"Ha ocurrido un error dentro de Get: {ex.Message}");
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -89,7 +89,7 @@ namespace SistemaSolar.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Something went wrong inside Get action: {ex.Message}");
+                _logger.LogError($"Ha ocurrido un error dentro de Get: {ex.Message}");
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -122,7 +122,7 @@ namespace SistemaSolar.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Something went wrong inside GetDiasDeSequia action: {ex.Message}");
+                _logger.LogError($"Ha ocurrido un error dentro de GetDiasDeSequia: {ex.Message}");
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -155,7 +155,7 @@ namespace SistemaSolar.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Something went wrong inside GetDiasDeLluvia action: {ex.Message}");
+                _logger.LogError($"Ha ocurrido un error dentro de GetDiasDeLluvia: {ex.Message}");
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -188,7 +188,7 @@ namespace SistemaSolar.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Something went wrong inside GetDiasOptimos action: {ex.Message}");
+                _logger.LogError($"Ha ocurrido un error dentro de GetDiasOptimos: {ex.Message}");
                 return StatusCode(500, "Internal server error");
             }
         }
@@ -208,21 +208,31 @@ namespace SistemaSolar.Controllers
         /// <param name="years">Años a pronosticar</param>  
         /// <returns></returns>
         /// <response code="200">Si se ha pronosticado exitosamente</response>
-        /// <response code="400">Si hubo un error durante la ejecución</response>
+        /// <response code="400">Si la cantidad de años es inválida</response>
+        /// <response code="500">Si hubo un error durante la ejecución</response>
         [HttpPost("Run")]
         [ProducesResponseType(200)]
         [ProducesResponseType(400)]
+        [ProducesResponseType(500)]
         public IActionResult RunJob([FromBody]int years)
         {
-            _logger.LogInformation("Inicio del job");
-
-            var job = _jobService.Run(null, years);
-            if (job == null)
+            try
             {
-                return BadRequest(years);
-            }
 
-            return Ok(job);
+                _logger.LogInformation("Inicio del job");
+
+                var job = _jobService.Run(null, years);
+                if (job == null)
+                {
+                    return BadRequest(years);
+                }
+
+                return Ok(job);
+            }
+            catch
+            {
+                return StatusCode(500, "Internal server error");
+            }
         }
     }
 }
