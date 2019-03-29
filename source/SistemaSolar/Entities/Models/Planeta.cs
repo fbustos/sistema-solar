@@ -30,8 +30,8 @@ namespace Entities.Models
             get
             {
                 double anguloRad = (Math.PI / 180.0) * this.Posicion;
-                double x = this.Distancia * Math.Cos(anguloRad);
-                double y = this.Distancia * Math.Sin(anguloRad);
+                double x = Math.Round(this.Distancia * Math.Cos(anguloRad), 2);
+                double y = Math.Round(this.Distancia * Math.Sin(anguloRad), 2);
 
                 return new Tuple<double, double>(x, y);
             }
