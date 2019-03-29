@@ -48,6 +48,7 @@ namespace Services
 
             for (var i = 1; i <= totalDays; i++)
             {
+                planetas.ToList().ForEach(planeta => planeta.ActualizarPosicionUnDia());
                 var clima = PronosticarClimaPorDia(i, planetas);
 
                 var p = clima == ClimaConstants.Lluvia ? this.CalcularPerimetro(planetas) : 0.0;
@@ -72,15 +73,9 @@ namespace Services
             _repository.Pronostico.Save();
         }
 
-        private double GetTotalDays(int anios, DateTime fechaInicio)
-        {
-            return (fechaInicio.AddYears(anios) - fechaInicio).TotalDays;
-        }
-
-        private string PronosticarClimaPorDia(int dia, IEnumerable<Planeta> planetas)
+        public string PronosticarClimaPorDia(int dia, IEnumerable<Planeta> planetas)
         {
             var sol = new Tuple<double, double>(0.0, 0.0);
-            planetas.ToList().ForEach(p => p.ActualizarPosicionUnDia());
 
             if (this.EstanAlineados(planetas, out double? pendiente))
             {
@@ -98,20 +93,7 @@ namespace Services
             return ClimaConstants.Indeterminado;
         }
 
-        private double CalcularPerimetro(IEnumerable<Planeta> planetas)
-        {
-            var p1 = planetas.ElementAt(0);
-            var p2 = planetas.ElementAt(1);
-            var p3 = planetas.ElementAt(2);
-
-            var d1 = this.DistanciaEntre(p1.PosicionRectangular, p2.PosicionRectangular);
-            var d2 = this.DistanciaEntre(p1.PosicionRectangular, p3.PosicionRectangular);
-            var d3 = this.DistanciaEntre(p2.PosicionRectangular, p3.PosicionRectangular);
-
-            return d1 + d2 + d3;
-        }
-
-        private bool PlanetasContienenAlSol(IEnumerable<Planeta> planetas, Tuple<double, double> sol)
+        public bool PlanetasContienenAlSol(IEnumerable<Planeta> planetas, Tuple<double, double> sol)
         {
             // Solo implementado para 3 planetas (forman un triangulo)
             if (planetas.Count() == 3)
@@ -125,29 +107,13 @@ namespace Services
                 var area2 = this.AreaTriangulo(p1.PosicionRectangular, sol, p3.PosicionRectangular);
                 var area3 = this.AreaTriangulo(sol, p2.PosicionRectangular, p3.PosicionRectangular);
 
-                return areaTotal == (area1 + area2 + area3);
+                return Math.Round(areaTotal, 2) == Math.Round(area1 + area2 + area3, 2);
             }
 
             return false;
         }
 
-        private double AreaTriangulo(Tuple<double, double> pos1, Tuple<double, double> pos2, Tuple<double, double> pos3)
-        {
-            var d1 = this.DistanciaEntre(pos1, pos2);
-            var d2 = this.DistanciaEntre(pos1, pos3);
-            var d3 = this.DistanciaEntre(pos2, pos3);
-            // calculo del semiperimetro
-            var s = (d1 + d2 + d3) / 2;
-
-            return Math.Sqrt(s * (s - d1) * (s - d2) * (s - d3));
-        }
-
-        private double DistanciaEntre(Tuple<double, double> pos1, Tuple<double, double> pos2)
-        {
-            return Math.Sqrt(Math.Pow(pos1.Item1 - pos2.Item1, 2) + Math.Pow(pos1.Item2 - pos2.Item2, 2));
-        }
-
-        private bool EstanAlineados(IEnumerable<Planeta> planetas, out double? pendiente)
+        public bool EstanAlineados(IEnumerable<Planeta> planetas, out double? pendiente)
         {
             pendiente = null;
 
@@ -171,16 +137,50 @@ namespace Services
             return true;
         }
 
-        private bool AlineadosAlSol(double? pendiente, Planeta planeta, Tuple<double, double> sol)
+        public bool AlineadosAlSol(double? pendiente, Planeta planeta, Tuple<double, double> sol)
         {
             var p = CalcularPendiente(planeta.PosicionRectangular, sol);
 
             return p == pendiente;
         }
 
+        private double CalcularPerimetro(IEnumerable<Planeta> planetas)
+        {
+            var p1 = planetas.ElementAt(0);
+            var p2 = planetas.ElementAt(1);
+            var p3 = planetas.ElementAt(2);
+
+            var d1 = this.DistanciaEntre(p1.PosicionRectangular, p2.PosicionRectangular);
+            var d2 = this.DistanciaEntre(p1.PosicionRectangular, p3.PosicionRectangular);
+            var d3 = this.DistanciaEntre(p2.PosicionRectangular, p3.PosicionRectangular);
+
+            return d1 + d2 + d3;
+        }
+
+        private double GetTotalDays(int anios, DateTime fechaInicio)
+        {
+            return (fechaInicio.AddYears(anios) - fechaInicio).TotalDays;
+        }
+
+        private double AreaTriangulo(Tuple<double, double> pos1, Tuple<double, double> pos2, Tuple<double, double> pos3)
+        {
+            var d1 = this.DistanciaEntre(pos1, pos2);
+            var d2 = this.DistanciaEntre(pos1, pos3);
+            var d3 = this.DistanciaEntre(pos2, pos3);
+            // calculo del semiperimetro
+            var s = (d1 + d2 + d3) / 2;
+
+            return Math.Sqrt(s * (s - d1) * (s - d2) * (s - d3));
+        }
+
+        private double DistanciaEntre(Tuple<double, double> pos1, Tuple<double, double> pos2)
+        {
+            return Math.Sqrt(Math.Pow(pos1.Item1 - pos2.Item1, 2) + Math.Pow(pos1.Item2 - pos2.Item2, 2));
+        }
+
         private double? CalcularPendiente(Tuple<double, double> p1, Tuple<double, double> p2)
         {
-            return (p1.Item1 - p2.Item1) == 0 ? (double?)null : (p1.Item2 - p2.Item2) / (p1.Item1 - p2.Item1);
+            return (p1.Item1 - p2.Item1) == 0 ? (double?)null : Math.Round((p1.Item2 - p2.Item2) / (p1.Item1 - p2.Item1), 2);
         }
     }
 }
