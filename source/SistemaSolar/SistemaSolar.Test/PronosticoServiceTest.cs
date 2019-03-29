@@ -267,7 +267,7 @@ namespace Tests
 
 
             var service = new PronosticoService(null, null);
-            var clima = service.PronosticarClimaPorDia(It.IsAny<int>(), list);
+            var clima = service.PronosticarClimaDePlanetas(list);
 
             Assert.AreEqual(clima, ClimaConstants.Sequia);
         }
@@ -300,7 +300,7 @@ namespace Tests
 
 
             var service = new PronosticoService(null, null);
-            var clima = service.PronosticarClimaPorDia(It.IsAny<int>(), list);
+            var clima = service.PronosticarClimaDePlanetas(list);
 
             Assert.AreEqual(clima, ClimaConstants.Optimo);
         }
@@ -333,7 +333,7 @@ namespace Tests
 
 
             var service = new PronosticoService(null, null);
-            var clima = service.PronosticarClimaPorDia(It.IsAny<int>(), list);
+            var clima = service.PronosticarClimaDePlanetas(list);
 
             Assert.AreEqual(clima, ClimaConstants.Lluvia);
         }
@@ -366,7 +366,7 @@ namespace Tests
 
 
             var service = new PronosticoService(null, null);
-            var clima = service.PronosticarClimaPorDia(It.IsAny<int>(), list);
+            var clima = service.PronosticarClimaDePlanetas(list);
 
             Assert.AreEqual(clima, ClimaConstants.Indeterminado);
         }

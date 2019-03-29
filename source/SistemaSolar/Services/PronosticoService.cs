@@ -49,7 +49,7 @@ namespace Services
             for (var i = 1; i <= totalDays; i++)
             {
                 planetas.ToList().ForEach(planeta => planeta.ActualizarPosicionUnDia());
-                var clima = PronosticarClimaPorDia(i, planetas);
+                var clima = PronosticarClimaDePlanetas(planetas);
 
                 var p = clima == ClimaConstants.Lluvia ? this.CalcularPerimetro(planetas) : 0.0;
                 perimetroMax = Math.Max(perimetroMax, p);
@@ -73,7 +73,7 @@ namespace Services
             _repository.Pronostico.Save();
         }
 
-        public string PronosticarClimaPorDia(int dia, IEnumerable<Planeta> planetas)
+        public string PronosticarClimaDePlanetas(IEnumerable<Planeta> planetas)
         {
             var sol = new Tuple<double, double>(0.0, 0.0);
 
